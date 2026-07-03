@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(req: NextRequest) {
-    const token = req.cookies.get("token")?.value;
+export function proxy(req: NextRequest) {
+    const token = req.cookies.get("access_token")?.value;
 
     const isLoginPage = req.nextUrl.pathname === "/login";
 
@@ -13,6 +13,12 @@ export function middleware(req: NextRequest) {
 
         return NextResponse.redirect(loginUrl);
     }
+    const isHomePage = req.nextUrl.pathname === "/";
+    if (token && isHomePage) {
+        const chatUrl = new URL("/chat", req.url);
+        return NextResponse.redirect(chatUrl);
+    }
+
 
     return NextResponse.next();
 }

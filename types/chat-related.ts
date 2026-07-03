@@ -1,0 +1,46 @@
+export interface MessageDto {
+    messageId: string;
+    content: string;
+    messageSegments?: RagSegment[];
+    createdAt: string;
+    senderType: "user" | "assistant";
+    chatId: string;
+}
+
+export type Chat = {
+    chatId: string;
+    chatTitle: string;
+    createdAt: string;
+    lastMessageAt: string;
+};
+
+export interface RagCitation {
+    type: string;
+    content?: string;
+    imgId?: string;
+    processedTexts?: string[][];
+    processedInfo?: string[][];
+}
+
+export interface ProcessedCiteObj {
+    texts: Record<string, string[]>;
+    images: Record<string, string[]>;
+}
+
+export interface RagSegment {
+    role: string;
+    type: string;
+    segment: string;
+    citations?: RagCitation[];
+    processedCiteObj?: ProcessedCiteObj;
+    raw?: unknown;
+}
+
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt: Date;
+  parts?: RagSegment[];
+}

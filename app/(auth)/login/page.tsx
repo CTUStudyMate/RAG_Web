@@ -2,10 +2,12 @@
 
 import { AuthForm } from "@/components/forms/auth-form";
 import { SubmitButton } from "@/components/forms/submit-button";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "@/components/ui/toast";
+import { useSearchParams } from "next/navigation";
+import { mutate } from "swr";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
@@ -21,15 +23,14 @@ async function loginRequest(data: { email: string; password: string }) {
 }
 
 export default function Page() {
+    const searchParams = useSearchParams();
+    const redirectTo = searchParams.get("redirect") || "/";
     const router = useRouter();
 
     const [email, setEmail] = useState("");
     const [isSuccessful, setIsSuccessful] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (formData: FormData) => {
-        setLoading(true);
-
         const data = {
             email: String(formData.get("email")),
             password: String(formData.get("password")),
@@ -38,22 +39,20 @@ export default function Page() {
         try {
             const res = await loginRequest(data);
 
-            console.log("STATUS:", res.status);
-            console.log("OK:", res.ok);
-
             if (!res.ok) {
                 toast({ type: "error", description: "Invalid credentials!" });
                 return;
             }
 
+            await mutate("/api/auth/me");
+
             setIsSuccessful(true);
 
             toast({ type: "success", description: "Login successful!" });
+            router.push(redirectTo);
 
         } catch (err) {
             toast({ type: "error", description: "Network error!" });
-        } finally {
-            setLoading(false);
         }
     };
     return (

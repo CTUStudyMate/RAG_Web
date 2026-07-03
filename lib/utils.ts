@@ -12,18 +12,6 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 
-export async function fetcher<T>(url: string): Promise<T> {
-  const res = await fetch(`${backendUrl}${url}`, {
-    credentials: "include",
-  });
-
-  if (!res.ok) {
-    const { code, cause } = await res.json();
-    throw new ChatbotError(code as ErrorCode, cause);
-  }
-
-  return res.json();
-}
 
 export async function fetcher<T>(url: string): Promise<T> {
   const res = await fetch(`${backendUrl}${url}`, {

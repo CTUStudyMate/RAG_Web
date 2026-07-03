@@ -15,7 +15,7 @@ export function proxy(req: NextRequest) {
     }
     const isHomePage = req.nextUrl.pathname === "/";
     if (token && isHomePage) {
-        const chatUrl = new URL("/chat", req.url);
+        const chatUrl = new URL("/home", req.url);
         return NextResponse.redirect(chatUrl);
     }
 

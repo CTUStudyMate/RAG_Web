@@ -2,10 +2,13 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 
-import { formatISO } from 'date-fns';
 import { ChatbotError, ErrorCode } from "@/types/error";
-import { ChatMessage, MessageDto, RagSegment } from "@/types/chat-related";
+// import { ChatMessage, MessageDto, RagSegment } from "@/types/chat-related";
+import { ChatMessage } from "@/types/chat-related";
+import { mapChatMessage } from "@/utils/chat_mappers";
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
+
+
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -24,6 +27,12 @@ export async function fetcher<T>(url: string): Promise<T> {
   }
 
   return res.json();
+}
+
+export async function messagesFetcher(url: string): Promise<ChatMessage[]> {
+  const data = await fetcher<any>(url);
+
+  return data.map(mapChatMessage);
 }
 
 export async function fetchWithErrorHandlers(
@@ -61,17 +70,17 @@ export function sanitizeText(text: string) {
   return text.replace('<has_function_call>', '');
 }
 
-export function convertToChatMessages(
-  messages: MessageDto[]
-): ChatMessage[] {
-  return messages.map((message) => ({
-    id: message.messageId,
-    role: message.senderType,
-    content: message.content,
-    createdAt: new Date(message.createdAt),
-    parts: message.messageSegments,
-  }));
-}
+// export function convertToChatMessages(
+//   messages: MessageDto[]
+// ): ChatMessage[] {
+//   return messages.map((message) => ({
+//     id: message.messageId,
+//     role: message.senderType,
+//     content: message.content,
+//     createdAt: new Date(message.createdAt),
+//     parts: message.messageSegments,
+//   }));
+// }
 
 
 
@@ -79,3 +88,22 @@ export function getTextFromMessage(message: ChatMessage): string {
   return message.content;
 }
 
+export async function httpPost<TResponse, TRequest>(
+  url: string,
+  body: TRequest
+): Promise<TResponse> {
+  const res = await fetch(`${backendUrl}${url}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+
+  return res.json() as Promise<TResponse>;
+}

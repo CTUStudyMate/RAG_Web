@@ -7,6 +7,8 @@ import { Toaster } from "sonner";
 import { SidebarInset, SidebarProvider } from "@/components/layout-main/sidebar";
 import { AppSidebar } from "@/components/layout-main/app-sidebar";
 import { cookies } from "next/headers";
+import { ActiveChatProvider } from "@/hooks/use-active-chat";
+import { ChatShell } from "@/components/layout-main/chat-shell";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -37,9 +39,9 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
           }}
         />
         <Suspense fallback={<div className="flex h-dvh" />}>
-          {/* <ActiveChatProvider>
+          <ActiveChatProvider>
             <ChatShell />
-          </ActiveChatProvider> */}
+          </ActiveChatProvider>
           <div></div>
         </Suspense>
         {children}

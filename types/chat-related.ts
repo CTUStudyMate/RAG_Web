@@ -1,4 +1,4 @@
-export interface MessageDto {
+export interface ChatMessage {
     messageId: string;
     content: string;
     messageSegments?: RagSegment[];
@@ -37,10 +37,10 @@ export interface RagSegment {
 }
 
 
-export interface ChatMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  createdAt: Date;
-  parts?: RagSegment[];
-}
+// export interface ChatMessage {
+//   id: string;
+//   role: "user" | "assistant";
+//   content: string;
+//   createdAt: Date;
+//   parts?: RagSegment[];
+// }

@@ -1,6 +1,6 @@
 import { ChatMessage } from "@/types/chat-related";
 
-export type ChatStatus = "submitted" | "ready" | "error";
+export type ChatStatus = "is-sending" | "not-sending" | "has-send"; // has-send just means for UI
 
 export interface ChatState {
     status: ChatStatus;
@@ -22,9 +22,7 @@ export interface UseChatHelpers {
 
     error?: Error;
 
-    sendMessage(message: ChatMessage): Promise<void>;
-
-    stop(): Promise<void>;
+    sendMessage(text: string): Promise<void>;
 
     clearError(): void;
 
@@ -67,13 +65,13 @@ export abstract class AbstractChat implements UseChatHelpers {
         return this.state.error;
     }
 
-    abstract sendMessage(message: ChatMessage): Promise<void>;
+    abstract sendMessage(message: string): Promise<void>;
 
     abstract stop(): Promise<void>;
 
     clearError(): void {
         this.state.error = undefined;
-        this.state.status = "ready";
+        this.state.status = "not-sending";
     }
 
     setMessages(
@@ -88,42 +86,3 @@ export abstract class AbstractChat implements UseChatHelpers {
         }
     }
 }
-
-/* -------------------------------------------------------------------------- */
-/*                         Temporary implementation                           */
-/* -------------------------------------------------------------------------- */
-
-export class Chat extends AbstractChat {
-    async sendMessage(message: ChatMessage): Promise<void> {
-        console.log("sendMessage", message);
-    }
-
-    async stop(): Promise<void> {
-        console.log("stop");
-    }
-}
-
-export const createChatState = (): ChatState => ({
-    status: "ready",
-
-    error: undefined,
-
-    messages: [],
-
-    pushMessage(message) {
-        console.log("pushMessage", message);
-    },
-
-    popMessage() {
-        console.log("popMessage");
-    },
-
-    replaceMessage(index, message) {
-        console.log("replaceMessage", index, message);
-    },
-
-    snapshot<T>(thing: T): T {
-        console.log("snapshot", thing);
-        return thing;
-    },
-});

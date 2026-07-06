@@ -42,7 +42,7 @@ function renderCitationBadge(
 ) {
     if (type === "text") {
         return (
-            <span className="ml-1 inline-flex items-center justify-center rounded-sm bg-gray-200 px-1.5 text-[10px] font-medium">
+            <span className="ml-1 inline-flex items-center justify-center rounded-sm bg-gray-400 px-1.5 text-[10px] fill-gray-500 text-white font-bold">
                 {mark}
             </span>
         );
@@ -50,8 +50,8 @@ function renderCitationBadge(
 
     if (type === "image") {
         return (
-            <span className="inline-flex items-center justify-center w-4 h-4 align-middle leading-none shrink-0 ml-1">
-                <Image className="w-full h-full object-contain block" />
+            <span className="inline-flex items-center justify-center align-middle leading-none shrink-0 ml-1 overflow-hidden rounded-lg w-5 h-5">
+                <Image className="w-full h-full object-contain block fill-gray-400 stroke-white w-4 h-4 stroke-1 rounded-lg" />
             </span>
         );
     }
@@ -107,7 +107,7 @@ function renderSegment(
             break;
 
         case "bullet_intro":
-            segmentEl = <div className="font-medium items-center">{text}{textCitations}{imageCitations}</div>;
+            segmentEl = <div className="items-center">{text}{textCitations}{imageCitations}</div>;
             break;
 
         default:

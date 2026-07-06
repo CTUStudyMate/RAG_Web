@@ -8,8 +8,8 @@ import { Messages } from "./messages";
 export function ChatShell() {
     const {
         chatId,
-        messages,
-        setMessages,
+        chatData,
+        mutate,
         sendMessage,
         input,
         setInput,
@@ -35,13 +35,16 @@ export function ChatShell() {
                 />
 
                 <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40">
-                    <Messages chatId={`${chatId}`}
-                        messages={messages}
-                        setMessages={setMessages}
-                        status={messages.length > 0 ? "has-send": "not-sending"}
-                        isLoading>
+                    {
+                        chatData &&
+                        <Messages chatId={`${chatId}`}
+                            messages={chatData}
+                            setMessages={mutate}
+                            status={chatData.length > 0 ? "has-send" : "not-sending"}
+                            isLoading>
 
-                    </Messages>
+                        </Messages>
+                    }
                 </div>
             </div>
         </>

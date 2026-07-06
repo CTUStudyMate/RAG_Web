@@ -9,8 +9,8 @@ import useSWR from "swr";
 
 type ActiveChatContextValue = {
     chatId: string;
-    messages: ChatMessage[];
-    setMessages: Dispatch<SetStateAction<ChatMessage[]>>;
+    chatData: ChatMessage[] | undefined;
+    mutate: ReturnType<typeof useSWR<ChatMessage[]>>["mutate"];
     sendMessage: (text: string) => Promise<void>;
     setInput: Dispatch<SetStateAction<string>>;
     input: string;
@@ -37,21 +37,41 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         newChatIdRef.current = generateUUID();
     }
     prevPathnameRef.current = pathname;
+
+
     const chatId = chatIdFromUrl ?? newChatIdRef.current;
     const [input, setInput] = useState("");
 
-    const { data: chatData, isLoading } = useSWR<ChatMessage[]>(
+    const { data: chatData, isLoading, mutate } = useSWR<ChatMessage[]>(
         isNewChat ? null : `/api/chats/${chatId}/messages`,
         messagesFetcher,
         { revalidateOnFocus: false }
     );
 
-    const initialMessages: ChatMessage[] = isNewChat
-        ? []
-        : (chatData ?? []);
-
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isSending, setIsSending] = useState(false);
+
+    // const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+    // const sendMessage = async (text: string) => {
+    //     setIsSending(true);
+
+    //     const userMessage: ChatMessage = {
+    //         messageId: crypto.randomUUID(),
+    //         content: text,
+    //         senderType: "user",
+    //         createdAt: new Date().toISOString(),
+    //         chatId,
+    //     };
+
+    //     setMessages(prev => [...prev, userMessage]);
+
+    //     var assistantMessage = await sendUserMessage(userMessage)
+
+    //     setMessages(prev => [...prev, assistantMessage]);
+
+    //     setIsSending(false);
+    // };
+
 
     const sendMessage = async (text: string) => {
         setIsSending(true);
@@ -64,16 +84,20 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             chatId,
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        mutate(
+            (prev: ChatMessage[] = []) => [...prev, userMessage],
+            false
+        );
 
-        var assistantMessage = await sendUserMessage(userMessage)
+        const assistantMessage = await sendUserMessage(userMessage);
 
-        setMessages(prev => [...prev, assistantMessage]);
+        mutate(
+            (prev: ChatMessage[] = []) => [...prev, assistantMessage],
+            false
+        );
 
         setIsSending(false);
     };
-
-
 
     const loadedChatIds = useRef(new Set<string>());
 
@@ -82,24 +106,28 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     }
 
     useEffect(() => {
+        console.log("Chatid has changed.")
+
         if (loadedChatIds.current.has(chatId)) {
             return;
         }
         if (chatData) {
+            console.log("has not loaded")
+            console.log(chatData)
             loadedChatIds.current.add(chatId);
-            setMessages(chatData);
+            mutate(chatData);
         }
-    }, [chatId, chatData, setMessages]);
+    }, [chatId, chatData]);
 
     const prevChatIdRef = useRef(chatId);
     useEffect(() => {
         if (prevChatIdRef.current !== chatId) {
             prevChatIdRef.current = chatId;
             if (isNewChat) {
-                setMessages([]);
+                mutate([], false);
             }
         }
-    }, [chatId, isNewChat, setMessages]);
+    }, [chatId, isNewChat]);
 
 
     const hasAppendedQueryRef = useRef(false);
@@ -119,8 +147,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
     const value: ActiveChatContextValue = useMemo(() => ({
         chatId,
-        messages,
-        setMessages,
+        chatData,
+        mutate,
         sendMessage,
         input,
         setInput,
@@ -128,10 +156,10 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         isLoading,
     }), [
         chatId,
-        messages,
-        setMessages,
+        chatData,
         sendMessage,
         input,
+        setInput,
         isSending,
         isLoading,
     ]);
@@ -140,7 +168,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             {children}
         </ActiveChatContext.Provider>
     );
-
 }
 
 export function useActiveChat() {

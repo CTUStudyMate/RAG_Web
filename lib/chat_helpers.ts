@@ -1,4 +1,5 @@
 import { ChatMessage } from "@/types/chat-related";
+import useSWR from "swr";
 
 export type ChatStatus = "is-sending" | "not-sending" | "has-send"; // has-send just means for UI
 
@@ -26,11 +27,7 @@ export interface UseChatHelpers {
 
     clearError(): void;
 
-    setMessages(
-        messages:
-            | ChatMessage[]
-            | ((messages: ChatMessage[]) => ChatMessage[])
-    ): void;
+    setMessages: ReturnType<typeof useSWR<ChatMessage[]>>["mutate"];
 }
 
 export abstract class AbstractChat implements UseChatHelpers {

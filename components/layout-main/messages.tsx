@@ -26,7 +26,6 @@ function PureMessages({ chatId, status, messages, setMessages, isLoading }: Mess
         status,
     });
 
-    console.log(messages)
     const prevChatIdRef = useRef(chatId);
     useEffect(() => {
         if (prevChatIdRef.current !== chatId) {

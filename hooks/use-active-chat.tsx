@@ -1,7 +1,8 @@
 "use client"
 
+import { getTextChunksAndImgsIDs } from "@/lib/message_helpers";
 import { fetcher, generateUUID, messagesFetcher } from "@/lib/utils";
-import { sendUserMessage } from "@/services/backendCalls/sendMessage";
+import { sendUserMessage } from "@/services/sendMessage";
 import { ChatMessage } from "@/types/chat-related";
 import { usePathname } from "next/navigation";
 import { type ReactNode, type SetStateAction, type Dispatch, createContext, useRef, useState, useEffect, useMemo, useContext } from "react"
@@ -49,15 +50,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
     const [isSending, setIsSending] = useState(false);
 
-    //citation
-    const loadedIdsForCitation = useRef<{
-        textChunkIds: string[];
-        imgIds: string[];
-    }>({
-        textChunkIds: [],
-        imgIds: [],
-    });
-
 
     const sendMessage = async (text: string) => {
         setIsSending(true);
@@ -102,10 +94,50 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         }
     }, [chatId, chatData]);
 
-    //citation useEffect
+
+    //citation
+    const loadedIdsForCitation = useRef<{
+        textChunkIds: string[];
+        imgIds: string[];
+    }>({
+        textChunkIds: [],
+        imgIds: [],
+    });
+
     useEffect(() => {
-        console.log("Chat data has changed.")
-    }, [chatData])
+        if (!chatData) return;
+        console.log("Chat data has changed.");
+        const newTextChunkIds: string[] = [];
+        const newImgIds: string[] = [];
+        for (const message of chatData) {
+            // chỉ lấy citation của assistant
+            if (message.senderType !== "assistant") {
+                continue;
+            }
+            const msgCiteIds = getTextChunksAndImgsIDs(message);
+            if (!msgCiteIds) continue;
+            // check text chunks
+            for (const chunkId of msgCiteIds.textChunkIds) {
+                if (
+                    !loadedIdsForCitation.current.textChunkIds.includes(chunkId)
+                ) {
+                    newTextChunkIds.push(chunkId);
+                    loadedIdsForCitation.current.textChunkIds.push(chunkId);
+                }
+            }
+            // check images
+            for (const imgId of msgCiteIds.imgIds) {
+                if (
+                    !loadedIdsForCitation.current.imgIds.includes(imgId)
+                ) {
+                    newImgIds.push(imgId);
+                    loadedIdsForCitation.current.imgIds.push(imgId);
+                }
+            }
+        }
+
+
+    }, [chatData]);
 
     const prevChatIdRef = useRef(chatId);
     useEffect(() => {

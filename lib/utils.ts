@@ -30,8 +30,8 @@ export async function fetcher<T>(url: string): Promise<T> {
 }
 
 export async function messagesFetcher(url: string): Promise<ChatMessage[]> {
+  console.log("call fetcher")
   const data = await fetcher<any>(url);
-
   return data.map(mapChatMessage);
 }
 

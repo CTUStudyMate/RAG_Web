@@ -1,11 +1,7 @@
 import { UseChatHelpers } from "@/lib/chat_helpers";
-import { cn } from "@/lib/utils";
 import { ChatMessage, RagSegment } from "@/types/chat-related";
-import { ChatbotError } from "@/types/error";
-import { Image } from "lucide-react";
-import { CitationBadge, processCitationMark } from "./citation";
-
-
+import { CitationBadge } from "./citation";
+import { processCitationMark } from "@/lib/message_helpers";
 
 function renderSegment(
     segment: RagSegment,
@@ -33,7 +29,7 @@ function renderSegment(
 
         return (
             <span key={docId}>
-               <CitationBadge mark={mark} type="image"></CitationBadge>
+                <CitationBadge mark={mark} type="image"></CitationBadge>
             </span>
         );
     });
@@ -68,7 +64,11 @@ function renderSegment(
 }
 
 function MessageContent({ message }: { message: ChatMessage }) {
+    console.log("Render assistant message.")
+    console.log(message.messageSegments)
     if (!message.messageSegments) {
+        console.log("message has no message segment")
+        console.log(message.content)
         return (
             <div className="bg-blue-500">
                 {message.content}
@@ -77,6 +77,8 @@ function MessageContent({ message }: { message: ChatMessage }) {
     }
 
     const citations = processCitationMark(message);
+    console.log("message id:", message.messageId);
+    console.log("citation map:", citations);
 
     return (
         <div className="leading-[1.65]">

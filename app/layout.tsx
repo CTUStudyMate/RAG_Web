@@ -58,17 +58,18 @@ export default function RootLayout({
       // className={`${geist.variable} ${geistMono.variable}`}
       lang="en"
       suppressHydrationWarning
+      // className="navy"
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_COLOR_SCRIPT }} />
       </head>
 
-      <body className="antialiased">
+      <body className="antialiased text-main-text">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           disableTransitionOnChange
-          enableSystem
+          // enableSystem
         >
           <TooltipProvider>{children}</TooltipProvider>
         </ThemeProvider>

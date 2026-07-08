@@ -27,7 +27,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 
   return (
-    <SidebarProvider defaultOpen={!isCollapsed}>
+    <SidebarProvider defaultOpen={!isCollapsed} className="bg-main-text">
       <AppSidebar />
       <SidebarInset>
         <Toaster

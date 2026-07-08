@@ -85,8 +85,9 @@ export function SidebarUserNav({ user }: { user: UIUser }) {
                         >
                             {`Toggle ${resolvedTheme === "light" ? "dark" : "light"} mode`}
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild data-testid="user-nav-item-auth">
+
+                        {/* <DropdownMenuSeparator /> */}
+                        {/* <DropdownMenuItem asChild data-testid="user-nav-item-auth">
                             <button
                                 className="w-full cursor-pointer text-[13px]"
                                 onClick={() => {
@@ -104,6 +105,11 @@ export function SidebarUserNav({ user }: { user: UIUser }) {
                                 type="button"
                             >
                             </button>
+                        </DropdownMenuItem> */}
+
+                        <DropdownMenuItem
+                            className="cursor-pointer text-[13px]"
+                        >Logout
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>

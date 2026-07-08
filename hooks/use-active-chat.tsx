@@ -50,28 +50,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
     const [isSending, setIsSending] = useState(false);
 
-    // const [messages, setMessages] = useState<ChatMessage[]>([]);
-
-    // const sendMessage = async (text: string) => {
-    //     setIsSending(true);
-
-    //     const userMessage: ChatMessage = {
-    //         messageId: crypto.randomUUID(),
-    //         content: text,
-    //         senderType: "user",
-    //         createdAt: new Date().toISOString(),
-    //         chatId,
-    //     };
-
-    //     setMessages(prev => [...prev, userMessage]);
-
-    //     var assistantMessage = await sendUserMessage(userMessage)
-
-    //     setMessages(prev => [...prev, assistantMessage]);
-
-    //     setIsSending(false);
-    // };
-
 
     const sendMessage = async (text: string) => {
         setIsSending(true);

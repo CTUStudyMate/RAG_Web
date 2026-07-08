@@ -112,7 +112,7 @@ function SidebarProvider({
                 }
                 className={cn(
                     "group/sidebar-wrapper flex min-h-svh w-full bg-sidebar",
-                    className
+                    className,
                 )}
                 {...props}
             >
@@ -142,7 +142,7 @@ function Sidebar({
             <div
                 data-slot="sidebar"
                 className={cn(
-                    "flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground",
+                    "flex h-full w-(--sidebar-width) flex-col bg-main-text text-sidebar-foreground",
                     className
                 )}
                 {...props}
@@ -567,6 +567,7 @@ function SidebarMenuSkeleton({
             data-sidebar="menu-skeleton"
             className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
             {...props}
+            // className="bg-main-text"
         >
             {showIcon && (
                 <Skeleton

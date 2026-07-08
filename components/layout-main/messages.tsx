@@ -36,7 +36,7 @@ function PureMessages({ chatId, status, messages, setMessages, isLoading }: Mess
 
     return (
         // <div className="relative flex-1 bg-background bg-black h-[200px]">
-        <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex flex-col h-full overflow-hidden text-sm">
             {messages.length === 0 && !isLoading && (
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                     {/* <Greeting /> */}

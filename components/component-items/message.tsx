@@ -3,61 +3,9 @@ import { cn } from "@/lib/utils";
 import { ChatMessage, RagSegment } from "@/types/chat-related";
 import { ChatbotError } from "@/types/error";
 import { Image } from "lucide-react";
+import { CitationBadge, processCitationMark } from "./citation";
 
-function processCitationMark(message: ChatMessage): Record<string, number> {
-    const result = new Map<string, number>();
-    let currentMark = 1;
 
-    if (!message.messageSegments) {
-        console.log(`Citation process failed: Message ${message.messageId} does not have segment form.`)
-        return {}
-    }
-
-    for (const segment of message.messageSegments) {
-        const processed = segment.processedCiteObj;
-        if (!processed) continue;
-
-        // Text citations
-        for (const docId of Object.keys(processed.texts ?? {})) {
-            if (!result.has(docId)) {
-                result.set(docId, currentMark++);
-            }
-        }
-
-        // Image citations
-        for (const docId of Object.keys(processed.images ?? {})) {
-            if (!result.has(docId)) {
-                result.set(docId, currentMark++);
-            }
-        }
-    }
-
-    return Object.fromEntries(result);
-}
-
-function renderCitationBadge(
-    docId: string,
-    mark: number,
-    type: "text" | "image"
-) {
-    if (type === "text") {
-        return (
-            <span className="ml-1 inline-flex items-center justify-center rounded-sm bg-gray-400 px-1.5 text-[10px] fill-gray-500 text-white font-bold">
-                {mark}
-            </span>
-        );
-    }
-
-    if (type === "image") {
-        return (
-            <span className="inline-flex items-center justify-center align-middle leading-none shrink-0 ml-1 overflow-hidden rounded-lg w-5 h-5">
-                <Image className="w-full h-full object-contain block fill-gray-400 stroke-white w-4 h-4 stroke-1 rounded-lg" />
-            </span>
-        );
-    }
-
-    return null;
-}
 
 function renderSegment(
     segment: RagSegment,
@@ -72,7 +20,7 @@ function renderSegment(
 
         return (
             <span key={docId}>
-                {renderCitationBadge(docId, mark, "text")}
+                <CitationBadge mark={mark} type="text"></CitationBadge>
             </span>
         );
     });
@@ -85,7 +33,7 @@ function renderSegment(
 
         return (
             <span key={docId}>
-                {renderCitationBadge(docId, mark, "image")}
+               <CitationBadge mark={mark} type="image"></CitationBadge>
             </span>
         );
     });
@@ -131,7 +79,7 @@ function MessageContent({ message }: { message: ChatMessage }) {
     const citations = processCitationMark(message);
 
     return (
-        <div className="text-[13px] leading-[1.65]">
+        <div className="leading-[1.65]">
             {message.messageSegments.map((segment, index) => (
                 <div key={index}>
                     {renderSegment(segment, citations)}
@@ -149,9 +97,11 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
 
 function UserMessage({ message }: { message: ChatMessage }) {
     return (
-        <h2 className="text-foreground h-10">
-            {message.content ?? "empty"}
-        </h2>
+        <div className="flex justify-end w-full">
+            <div className="max-w-[75%] rounded-2xl px-4 py-2 bg-user-bubble text-gray-900 bg-neutral-100">
+                {message.content ?? "empty"}
+            </div>
+        </div>
     );
 }
 

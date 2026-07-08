@@ -44,7 +44,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
           </ActiveChatProvider>
           <div></div>
         </Suspense>
-        {children}
+        {/* {children} */}
       </SidebarInset>
     </SidebarProvider>
   );

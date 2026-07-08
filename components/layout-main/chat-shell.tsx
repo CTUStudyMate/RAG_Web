@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 import { ChatHeader } from "../component-items/chat-header";
 import { Messages } from "./messages";
+import MessageInput from "../component-items/message-input";
 
 export function ChatShell() {
     const {
@@ -27,24 +28,36 @@ export function ChatShell() {
         <>
             <div
                 className={cn(
-                    "flex min-w-0 flex-col bg-sidebar transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] w-full"
+                    "flex min-w-0 flex-col bg-sidebar transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] w-full h-screen"
                 )}
             >
                 <ChatHeader
                     chatId={chatId}
                 />
 
-                <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40">
-                    {
-                        chatData &&
-                        <Messages chatId={`${chatId}`}
-                            messages={chatData}
-                            setMessages={mutate}
-                            status={chatData.length > 0 ? "has-send" : "not-sending"}
-                            isLoading>
+                <div className="relative flex min-h-0 flex-1 flex-col bg-background md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40">
 
-                        </Messages>
-                    }
+                    <div className="min-h-0 flex-1 overflow-y-auto">
+                        {
+                            chatData &&
+                            <Messages
+                                chatId={`${chatId}`}
+                                messages={chatData}
+                                setMessages={mutate}
+                                status={chatData.length > 0 ? "has-send" : "not-sending"}
+                                isLoading
+                            />
+                        }
+                    </div>
+
+                    <div className="
+                        mx-auto flex w-full max-w-4xl 
+                        gap-2 px-2 pb-3 md:px-4 md:pb-4
+                        bg-background
+                    ">
+                        <MessageInput sendMessage={sendMessage}/>
+                    </div>
+
                 </div>
             </div>
         </>

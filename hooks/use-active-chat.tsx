@@ -38,7 +38,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     }
     prevPathnameRef.current = pathname;
 
-
     const chatId = chatIdFromUrl ?? newChatIdRef.current;
     const [input, setInput] = useState("");
 
@@ -49,6 +48,15 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     );
 
     const [isSending, setIsSending] = useState(false);
+
+    //citation
+    const loadedIdsForCitation = useRef<{
+        textChunkIds: string[];
+        imgIds: string[];
+    }>({
+        textChunkIds: [],
+        imgIds: [],
+    });
 
 
     const sendMessage = async (text: string) => {
@@ -75,6 +83,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         );
 
         setIsSending(false);
+        // console.log("message send: ", text)
     };
 
     const loadedChatIds = useRef(new Set<string>());
@@ -84,18 +93,19 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     }
 
     useEffect(() => {
-        console.log("Chatid has changed.")
-
         if (loadedChatIds.current.has(chatId)) {
             return;
         }
         if (chatData) {
-            console.log("has not loaded")
-            console.log(chatData)
             loadedChatIds.current.add(chatId);
             mutate(chatData);
         }
     }, [chatId, chatData]);
+
+    //citation useEffect
+    useEffect(() => {
+        console.log("Chat data has changed.")
+    }, [chatData])
 
     const prevChatIdRef = useRef(chatId);
     useEffect(() => {

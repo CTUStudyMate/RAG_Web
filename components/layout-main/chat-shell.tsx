@@ -44,8 +44,8 @@ export function ChatShell() {
                                 chatId={`${chatId}`}
                                 messages={chatData}
                                 setMessages={mutate}
-                                status={chatData.length > 0 ? "has-send" : "not-sending"}
-                                isLoading
+                                status={isSending==true? "is-sending" : "not-sending" }
+                                isLoading={isLoading}
                             />
                         }
                     </div>

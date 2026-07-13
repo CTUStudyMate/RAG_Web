@@ -165,7 +165,7 @@ export function CitationBadge({ mark, type }: { mark: number, type: "text" | "im
         return (
             <Popover>
                 <PopoverTrigger asChild>
-                    <span className="ml-1 inline-flex w-4 h-4 items-center justify-center align-middle rounded-sm bg-gray-400 text-[10px] leading-none text-white font-mono cursor-pointer">
+                    <span className="ml-1 inline-flex w-4 h-4 items-center justify-center align-middle rounded-sm bg-main-navy text-[10px] leading-none text-white font-mono cursor-pointer">
                         {mark}
                     </span>
                 </PopoverTrigger>

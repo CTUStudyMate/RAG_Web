@@ -10,7 +10,7 @@ import {
 
 export default function WelcomePage() {
   return (
-    <div className="flex h-full items-center justify-center px-6">
+    <div className="flex min-h-dvh items-center justify-center px-6">
       <div className="w-full max-w-5xl">
         <div className="mb-12 text-center">
           <h1 className="text-4xl font-bold tracking-tight">

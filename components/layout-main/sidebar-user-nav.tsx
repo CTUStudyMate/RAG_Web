@@ -19,6 +19,10 @@ import { toast } from "../ui/toast";
 import { CookieUser, UIUser } from "@/types/user-related";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { mutate } from "swr";
+
+const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
 function emailToHue(email: string): number {
     let hash = 0;
@@ -33,6 +37,28 @@ export function SidebarUserNav({ user }: { user: UIUser }) {
         "/api/auth/me",
         fetcher
     );
+    const router = useRouter();
+    const handleLogout = async () => {
+        try {
+            const res = await fetch(`${backendUrl}/api/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            if (!res.ok) {
+                toast({ type: "error", description: "Logout failed!" });
+                return;
+            }
+
+            await mutate(() => true, undefined, { revalidate: false });
+
+            toast({ type: "success", description: "Logged out successfully!" });
+            router.push("/login");
+            router.refresh();
+        } catch {
+            toast({ type: "error", description: "Network error!" });
+        }
+    };
     const { setTheme, resolvedTheme } = useTheme();
 
 
@@ -107,7 +133,7 @@ export function SidebarUserNav({ user }: { user: UIUser }) {
                             </button>
                         </DropdownMenuItem> */}
 
-                        <DropdownMenuItem
+                        <DropdownMenuItem onClick={handleLogout}
                             className="cursor-pointer text-[13px]"
                         >Logout
                         </DropdownMenuItem>

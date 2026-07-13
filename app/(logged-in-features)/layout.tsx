@@ -29,6 +29,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={!isCollapsed} className="bg-main-text">
       <AppSidebar />
+
       <SidebarInset>
         <Toaster
           position="top-center"
@@ -39,12 +40,13 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
           }}
         />
         <Suspense fallback={<div className="flex h-dvh" />}>
-          <ActiveChatProvider>
+          
+          {/* <ActiveChatProvider>
             <ChatShell />
-          </ActiveChatProvider>
+          </ActiveChatProvider> */}
           <div></div>
+          {children}
         </Suspense>
-        {/* {children} */}
       </SidebarInset>
     </SidebarProvider>
   );

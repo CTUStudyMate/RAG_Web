@@ -1,6 +1,6 @@
 "use client"
 
-import { UIUser } from "@/types/user-related";
+import { UIUser, UserRole } from "@/types/user-related";
 import { useRouter } from "next/navigation";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarRail, SidebarTrigger, useSidebar } from "./sidebar";
 // import { useSWRConfig } from "swr";
@@ -13,7 +13,7 @@ import { SidebarUserNav } from "./sidebar-user-nav";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
-
+import Image from "next/image";
 
 export function AppSidebar() {
     const { data: user, isLoading, error } = useCurrentUser();
@@ -21,26 +21,44 @@ export function AppSidebar() {
     const { toggleSidebar } = useSidebar();
     const [chatOpen, setChatOpen] = useState(true);
 
+    const isLecturer = user?.role === UserRole.Lecturer
+
     return (
         <>
             <Sidebar collapsible="icon">
                 <SidebarHeader className="pb-0 pt-3">
                     <SidebarMenu>
-                        <SidebarMenuItem className="flex flex-row items-center justify-between">
+                        {isLecturer && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    onClick={() => router.push("/pending-approval")}
+                                >
+                                    <ClipboardCheckIcon className="size-4" />
+                                    <span>Pending Approval</span>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
+                        <SidebarMenuItem className="flex flex-row items-center justify-between mb-3">
                             <div className="group/logo relative flex items-center justify-center">
                                 <SidebarMenuButton
                                     asChild
-                                    className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
+                                    className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:hidden"
                                     tooltip="Chatbot"
                                 >
-                                    <Link href="/home">
-                                        <MessageSquareIcon className="size-4 text-sidebar-foreground/50" />
+                                    <Link href="/home" className="ml-1">
+                                        <Image
+                                            src="/images/CTU_logo.png"
+                                            alt="Logo"
+                                            width={25}
+                                            height={25}
+                                            unoptimized
+                                        />
                                     </Link>
                                 </SidebarMenuButton>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <SidebarMenuButton
-                                            className="pointer-events-none absolute inset-0 size-8 opacity-0 group-data-[collapsible=icon]:pointer-events-auto group-data-[collapsible=icon]:group-hover/logo:opacity-100"
+                                            className="hidden size-8 items-center justify-center group-data-[collapsible=icon]:flex"
                                             onClick={() => toggleSidebar()}
                                         >
                                             <PanelLeftIcon className="size-4" />

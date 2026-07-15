@@ -1,6 +1,7 @@
 "use client"
 import { useActiveChat } from "@/hooks/use-active-chat";
 import { cn } from "@/lib/utils";
+import { GraduationCap } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { ChatHeader } from "../component-items/chat-header";
 import { Messages } from "./messages";
@@ -47,6 +48,22 @@ export function ChatShell() {
                                 status={isSending==true? "is-sending" : "not-sending" }
                                 isLoading={isLoading}
                             />
+                        }
+                        {
+                            !chatData && 
+                            <div className="flex h-full w-full items-center justify-center px-4">
+                                <div className="flex max-w-md flex-col items-center text-center">
+                                    <div className="mb-4 flex size-12 items-center justify-center rounded-lg bg-main-navy/8 text-main-navy ring-1 ring-main-navy/10">
+                                        <GraduationCap className="size-6" />
+                                    </div>
+                                    <h1 className="text-2xl font-semibold text-main-navy">
+                                        Hello, what would you like to study?
+                                    </h1>
+                                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                        Ask a question, explore your course materials, or start with a topic you want to understand better.
+                                    </p>
+                                </div>
+                            </div>
                         }
                     </div>
 

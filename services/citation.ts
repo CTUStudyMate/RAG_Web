@@ -87,10 +87,7 @@ export async function fetchCitationData(citationObj: {
 
         images = results
             .filter(
-                (
-                    r
-                ): r is PromiseFulfilledResult<CitationImage> =>
-                    r.status === "fulfilled"
+                (r): r is PromiseFulfilledResult<CitationImage> => r.status === "fulfilled"
             )
             .map((r) => r.value);
     }

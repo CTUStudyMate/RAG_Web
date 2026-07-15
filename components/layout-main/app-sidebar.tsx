@@ -21,6 +21,7 @@ export function AppSidebar() {
     const { toggleSidebar } = useSidebar();
     const [chatOpen, setChatOpen] = useState(true);
 
+    console.log(user)
     const isLecturer = user?.role === UserRole.Lecturer
 
     return (
@@ -28,16 +29,7 @@ export function AppSidebar() {
             <Sidebar collapsible="icon">
                 <SidebarHeader className="pb-0 pt-3">
                     <SidebarMenu>
-                        {isLecturer && (
-                            <SidebarMenuItem>
-                                <SidebarMenuButton
-                                    onClick={() => router.push("/pending-approval")}
-                                >
-                                    <ClipboardCheckIcon className="size-4" />
-                                    <span>Pending Approval</span>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                        )}
+
                         <SidebarMenuItem className="flex flex-row items-center justify-between mb-3">
                             <div className="group/logo relative flex items-center justify-center">
                                 <SidebarMenuButton
@@ -98,6 +90,17 @@ export function AppSidebar() {
 
                             <SidebarMenu>
 
+                                {isLecturer && (
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            onClick={() => router.push("/pending-approval")}
+                                        >
+                                            <ClipboardCheckIcon className="size-4" />
+                                            <span>Pending Approval</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                )}
+
                                 <SidebarMenuItem>
                                     <SidebarMenuButton
                                         onClick={() => router.push("/documents")}
@@ -107,14 +110,17 @@ export function AppSidebar() {
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
 
-                                <SidebarMenuItem>
-                                    <SidebarMenuButton
-                                        onClick={() => router.push("/review")}
-                                    >
-                                        <ClipboardCheckIcon className="size-4" />
-                                        <span>Review</span>
-                                    </SidebarMenuButton>
-                                </SidebarMenuItem>
+                                {
+                                    user && user.role == UserRole.Student &&
+                                    <SidebarMenuItem>
+                                        <SidebarMenuButton
+                                            onClick={() => router.push("/review")}
+                                        >
+                                            <ClipboardCheckIcon className="size-4" />
+                                            <span>Review</span>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                }
 
                                 <SidebarMenuItem>
                                     <SidebarMenuButton
@@ -137,11 +143,11 @@ export function AppSidebar() {
                     </SidebarGroup>
                     {/* <SidebarHistory user={user} /> */}
                     {chatOpen && (
-                        <div className="pl-1">
+                        <div className="pl-3 pr-3">
                             <SidebarGroup className="pt-1">
                                 <SidebarGroupContent>
                                     <SidebarMenu>
-                                        <SidebarMenuItem>
+                                        <SidebarMenuItem className="pr-5">
                                             <SidebarMenuButton
                                                 className="h-8 rounded-lg border border-sidebar-border"
                                                 onClick={() => router.push("/chat")}

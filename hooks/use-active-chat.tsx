@@ -2,6 +2,7 @@
 
 import { getTextChunksAndImgsIDs } from "@/lib/message_helpers";
 import { fetcher, generateUUID, messagesFetcher } from "@/lib/utils";
+import { cacheCitation } from "@/services/citation";
 import { sendUserMessage } from "@/services/sendMessage";
 import { ChatMessage } from "@/types/chat-related";
 import { usePathname } from "next/navigation";
@@ -136,6 +137,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             }
         }
 
+        if (newTextChunkIds.length > 0 || newImgIds.length > 0) {
+            cacheCitation({
+                textChunkIds: newTextChunkIds,
+                imgIds: newImgIds,
+            }).catch((error) => {
+                console.error("Failed to cache citation data:", error);
+            });
+        }
 
     }, [chatData]);
 

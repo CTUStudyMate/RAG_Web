@@ -43,12 +43,6 @@ function parseChunkContent(chunkRow: any[]) {
     };
 }
 
-function normalizeText(text: string) {
-    return text
-        .toLowerCase()
-        .replace(/\s+/g, " ")
-        .trim();
-}
 
 function highlightEvidence(
     content: string,
@@ -184,9 +178,6 @@ export function CitationBadge({ mark, type }: { mark: number, type: "text" | "im
                     </div>
                 </PopoverContent>
             </Popover>
-            // <span className="ml-1 inline-flex w-4 h-4 items-center justify-center align-middle rounded-sm bg-gray-400 text-[10px] leading-none text-white font-mono cursor-pointer">
-            //     {mark}
-            // </span>
         );
     }
 

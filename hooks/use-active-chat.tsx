@@ -59,6 +59,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             messageId: crypto.randomUUID(),
             content: text,
             senderType: "user",
+            isVerify: false,
             createdAt: new Date().toISOString(),
             chatId,
         };

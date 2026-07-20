@@ -1,62 +1,23 @@
 "use client";
 
-import { ArrowLeft, Bot, CalendarClock, Check, CircleUserRound, FileText, CircleHelp } from "lucide-react";
+import { ArrowLeft, Bot, CalendarClock, Check, CircleUserRound, CircleHelp, Pencil } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import useSWR from "swr";
 
+import { AvailableCitations } from "@/components/component-items/available-citations";
+import { CitedAnswerContent, type CitedAnswerSegment } from "@/components/component-items/cited-answer-content";
+import { VerifiedMessageContent } from "@/components/component-items/verified-message-content";
 import { Button } from "@/components/ui/button";
+import { fetcher } from "@/lib/utils";
+import {
+    parseGeneratedAnswer,
+    prepareEditableAnswer,
+} from "@/lib/verified-answer";
+import { approveVerifiableQa } from "@/services/verifiable-qa";
 import type { RelatedQa } from "@/types/verifiable-qa-related";
-
-type GeneratedAnswerSegment = {
-    role?: string;
-    type?: string;
-    segment?: string;
-    processedCiteObj?: {
-        texts?: Record<string, string[]>;
-        images?: Record<string, string[]>;
-    };
-    processed_cite_obj?: {
-        texts?: Record<string, string[]>;
-        images?: Record<string, string[]>;
-    };
-};
-
-const exampleQa: RelatedQa = {
-    verifiableQaId: 2,
-    messageId: "87f8aba0-d3b9-4a4f-837f-4280034d7f72",
-    userId: 1,
-    originalQuestion: "What is software engineering?",
-    rewrittenQuestion: "What is software engineering",
-    generatedAnswer:
-        '[{"role":"paragraph","type":"cited","segment":"Software engineering is the use of knowledge of computers and computing to help solve problems, often related to computer systems, by first understanding the nature of the problem and then using technology as a tool to implement a solution if necessary.","processed_cite_obj":{"texts":{"se_theory_practice.pdf__chunk_128_129_39":["as software engineers we use our knowledge of computers and computing to help solve problems often the problem with which we are dealing is related to a computer or an existing computer system"]},"images":{}}},{"role":"paragraph","type":"cited","segment":"Software engineers use tools, techniques, procedures, and paradigms to enhance the quality of their software products, aiming to use efficient and productive approaches to generate effective solutions to problems.","processed_cite_obj":{"texts":{"se_theory_practice.pdf__chunk_137_139_42":["software engineers use tools techniques procedures and paradigms to enhance the quality of their software products"]},"images":{}}}]',
-    status: 0,
-    createdAt: "2026-07-15T16:21:57.728841Z",
-    user: {
-        userId: 1,
-        majorId: 1,
-        majorName: "Software Engineer",
-        email: "kt01@gmail.com",
-        name: "Kim Tran",
-        cohort: "K48",
-        accountStatus: "active",
-    },
-    courses: [
-        {
-            courseId: 1,
-            courseCode: "CT114H",
-            courseName: "Introduction to Software Engineering",
-        },
-    ],
-};
-
-function parseGeneratedAnswer(answer: string): GeneratedAnswerSegment[] {
-    try {
-        return JSON.parse(answer) as GeneratedAnswerSegment[];
-    } catch {
-        return [];
-    }
-}
+import { toast } from "@/components/ui/toast";
 
 function formatCreatedAt(value: string) {
     return new Intl.DateTimeFormat("en", {
@@ -77,100 +38,61 @@ function getStatusLabel(status: number) {
     return "Pending";
 }
 
-function getProcessedCiteObj(segment: GeneratedAnswerSegment) {
-    return segment.processedCiteObj ?? segment.processed_cite_obj;
-}
-
-function buildCitationMap(segments: GeneratedAnswerSegment[]) {
-    const citationMap = new Map<string, number>();
-    let currentMark = 1;
-
-    for (const segment of segments) {
-        const processedCiteObj = getProcessedCiteObj(segment);
-        if (!processedCiteObj) continue;
-
-        for (const docId of Object.keys(processedCiteObj.texts ?? {})) {
-            if (!citationMap.has(docId)) {
-                citationMap.set(docId, currentMark++);
-            }
-        }
-
-        for (const docId of Object.keys(processedCiteObj.images ?? {})) {
-            if (!citationMap.has(docId)) {
-                citationMap.set(docId, currentMark++);
-            }
-        }
-    }
-
-    return citationMap;
-}
-
-function getSegmentCitationMarks(
-    segment: GeneratedAnswerSegment,
-    citationMap: Map<string, number>
-) {
-    const processedCiteObj = getProcessedCiteObj(segment);
-    if (!processedCiteObj) return [];
-
-    return [
-        ...Object.keys(processedCiteObj.texts ?? {}),
-        ...Object.keys(processedCiteObj.images ?? {}),
-    ]
-        .map((docId) => citationMap.get(docId))
-        .filter((mark): mark is number => Boolean(mark));
-}
-
-function mapGeneratedAnswerToText(segments: GeneratedAnswerSegment[]) {
-    const citationMap = buildCitationMap(segments);
-    const lines: string[] = [];
-
-    for (const segment of segments) {
-    const text = segment.segment?.trim();
-        if (!text) continue;
-
-    const marks = getSegmentCitationMarks(segment, citationMap);
-        const citationText = marks.map((mark) => `[#citation${mark}]`).join(" ");
-        const textWithCitations = citationText ? `${text} ${citationText}` : text;
-
-    if (segment.role === "bullet") {
-            lines.push(`- ${textWithCitations}`);
-            continue;
-    }
-
-    if (segment.role === "sentence") {
-            const lastIndex = lines.length - 1;
-
-            if (lastIndex >= 0 && lines[lastIndex] && !lines[lastIndex].startsWith("- ")) {
-                lines[lastIndex] = `${lines[lastIndex]} ${textWithCitations}`;
-            } else {
-                lines.push(textWithCitations);
-            }
-            continue;
-    }
-
-    if (segment.role === "bullet_intro") {
-            lines.push(textWithCitations);
-            continue;
-    }
-
-        if (lines.length > 0) {
-            lines.push("");
-        }
-        lines.push(textWithCitations);
-    }
-
-    return lines.join("\n");
-}
-
 export default function PendingApprovalDetailPage() {
     const params = useParams<{ id: string }>();
     const id = params.id;
-    const qa = exampleQa;
-    const [question, setQuestion] = useState(qa.rewrittenQuestion);
-    const [questionDraft, setQuestionDraft] = useState(qa.rewrittenQuestion);
+    const router = useRouter();
+    const { data: qa, error, isLoading } = useSWR<RelatedQa>(
+        id ? `/api/verifiable-qa/${id}` : null,
+        fetcher,
+        { revalidateOnFocus: false }
+    );
+    const [question, setQuestion] = useState("");
+    const [questionDraft, setQuestionDraft] = useState("");
     const [isEditingQuestion, setIsEditingQuestion] = useState(false);
-    const answerSegments = parseGeneratedAnswer(qa.generatedAnswer);
-    const generatedAnswerText = mapGeneratedAnswerToText(answerSegments);
+    const [answer, setAnswer] = useState("");
+    const [answerDraft, setAnswerDraft] = useState("");
+    const [isEditingAnswer, setIsEditingAnswer] = useState(false);
+    const [hasSavedEditedAnswer, setHasSavedEditedAnswer] = useState(false);
+    const [isApproving, setIsApproving] = useState(false);
+    const loadedQaIdRef = useRef<number | null>(null);
+    const answerTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+    const generatedAnswerSegments = qa ? parseGeneratedAnswer(qa.generatedAnswer) : [];
+    const preparedAnswer = useMemo(
+        () => qa ? prepareEditableAnswer(qa.generatedAnswer) : null,
+        [qa]
+    );
+
+    useEffect(() => {
+        if (!qa || loadedQaIdRef.current === qa.verifiableQaId) {
+            return;
+        }
+
+        const initialQuestion = qa.rewrittenQuestion ?? qa.originalQuestion;
+        const generatedAnswer = preparedAnswer?.editedAnswer ?? qa.generatedAnswer;
+        setQuestion(initialQuestion);
+        setQuestionDraft(initialQuestion);
+        setAnswer(generatedAnswer);
+        setAnswerDraft(generatedAnswer);
+        setHasSavedEditedAnswer(false);
+        loadedQaIdRef.current = qa.verifiableQaId;
+    }, [qa, preparedAnswer]);
+
+    if (isLoading) {
+        return (
+            <main className="min-h-screen bg-background py-3 text-foreground md:px-6">
+                <p className="text-muted-foreground">Loading pending QA...</p>
+            </main>
+        );
+    }
+
+    if (error || !qa) {
+        return (
+            <main className="min-h-screen bg-background py-3 text-foreground md:px-6">
+                <p className="text-destructive">Failed to load pending QA.</p>
+            </main>
+        );
+    }
 
     function startEditingQuestion() {
         setQuestionDraft(question);
@@ -187,6 +109,71 @@ export default function PendingApprovalDetailPage() {
         setIsEditingQuestion(false);
     }
 
+    function startEditingAnswer() {
+        setAnswerDraft(answer);
+        setIsEditingAnswer(true);
+    }
+
+    function saveAnswer() {
+        setAnswer(answerDraft.trim() || answer);
+        setHasSavedEditedAnswer(true);
+        setIsEditingAnswer(false);
+    }
+
+    function cancelEditingAnswer() {
+        setAnswerDraft(answer);
+        setIsEditingAnswer(false);
+    }
+
+    function insertCitation(refId: string) {
+        const token = `[#${refId}]`;
+        const textarea = answerTextareaRef.current;
+
+        if (!textarea) {
+            setAnswerDraft((current) => `${current}${current ? " " : ""}${token}`);
+            return;
+        }
+
+        const selectionStart = textarea.selectionStart;
+        const selectionEnd = textarea.selectionEnd;
+        const nextAnswerDraft = `${answerDraft.slice(0, selectionStart)}${token}${answerDraft.slice(selectionEnd)}`;
+        const nextCursorPosition = selectionStart + token.length;
+
+        setAnswerDraft(nextAnswerDraft);
+        requestAnimationFrame(() => {
+            textarea.focus();
+            textarea.setSelectionRange(nextCursorPosition, nextCursorPosition);
+        });
+    }
+
+    async function handleApprove() {
+        if (!answer.trim()) {
+            toast({ type: "error", description: "Approved answer cannot be empty." });
+            return;
+        }
+
+        if (!qa || !preparedAnswer) {
+            toast({ type: "error", description: "Approved answer data is unavailable." });
+            return;
+        }
+
+        setIsApproving(true);
+
+        try {
+            await approveVerifiableQa(qa.verifiableQaId, {
+                editedAnswer: answer.trim(),
+                citations: preparedAnswer.citations,
+                citationMap: preparedAnswer.citationMap,
+            });
+            toast({ type: "success", description: "Verifiable QA approved successfully." });
+            router.push("/pending-approval");
+        } catch {
+            toast({ type: "error", description: "Failed to approve verifiable QA." });
+        } finally {
+            setIsApproving(false);
+        }
+    }
+
     return (
         <main className="min-h-screen bg-background py-3 text-foreground md:px-6">
             <header className="mb-6 flex flex-col gap-4 border-b border-border/70 pb-5 md:flex-row md:items-start md:justify-between">
@@ -196,28 +183,28 @@ export default function PendingApprovalDetailPage() {
                             <ArrowLeft className="size-4" />
                             Back
                         </Link>
-                        </Button>
+                    </Button>
                     <div className="flex flex-wrap items-center gap-2">
                         <h1 className="text-2xl font-semibold text-main-navy">
                             Verifiable QA #{id}
                         </h1>
-                        <span className="rounded-md border border-main-navy/15 bg-main-navy/8 px-2 py-1 text-xs font-medium text-main-navy">
+                        <span
+                            className={qa.status === 0
+                                ? "rounded-md border border-amber-500/30 bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800 dark:bg-amber-500/15 dark:text-amber-300"
+                                : "rounded-md border border-main-navy/15 bg-main-navy/8 px-2 py-1 text-xs font-medium text-main-navy"}
+                        >
                             {getStatusLabel(qa.status)}
                         </span>
                     </div>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Review the generated answer before approval.
+                        Review the generated question and answer before approval.
                     </p>
                 </div>
 
                 <div className="flex gap-2">
-                    <Button variant="outline">
-                        <FileText className="size-4" />
-                        Edit answer
-                    </Button>
-                    <Button>
+                    <Button onClick={handleApprove} disabled={isEditingAnswer || isApproving} className="bg-main-primary-light hover:bg-main-secondary cursor-pointer pr-5">
                         <Check className="size-4" />
-                        Approve
+                        {isApproving ? "Approving..." : "Approve"}
                     </Button>
                 </div>
             </header>
@@ -230,39 +217,50 @@ export default function PendingApprovalDetailPage() {
                                 <CircleHelp className="size-4 text-main-navy" />
                                 <h2 className="text-base font-semibold">Question</h2>
                             </div>
-                            {isEditingQuestion ? (
-                                <div className="flex gap-2">
-                                    <Button variant="outline" size="sm" onClick={cancelEditingQuestion}>
-                                        Cancel
-                                    </Button>
-                                    <Button size="sm" onClick={saveQuestion}>
-                                        Save
-                                    </Button>
-                                </div>
-                            ) : (
-                                <Button variant="outline" size="sm" onClick={startEditingQuestion}>
-                                    <FileText className="size-3.5" />
-                                    Edit
-                                </Button>
-                            )}
+
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                    Question
-                                </p>
-                                {isEditingQuestion ? (
-                                    <textarea
-                                        value={questionDraft}
-                                        onChange={(event) => setQuestionDraft(event.target.value)}
-                                        className="min-h-28 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm leading-6 text-foreground outline-none transition-colors focus:border-main-navy/40 focus:ring-3 focus:ring-main-navy/10"
-                                    />
-                                ) : (
-                                    <p className="text-base font-medium text-foreground">
-                                        {question}
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                        Question
                                     </p>
-                                )}
+                                    {isEditingQuestion ? (
+                                        <div className="flex gap-2 justify-end mb-2">
+                                            <Button variant="outline" size="sm" onClick={cancelEditingQuestion}>
+                                                Cancel
+                                            </Button>
+                                            <Button size="sm" onClick={saveQuestion} className="bg-main-primary-light hover:bg-main-secondary">
+                                                Save
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-2 justify-end">
+                                            <Button variant="outline" size="sm" onClick={startEditingQuestion}>
+                                                <Pencil className="size-4" />
+                                                Edit
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col justify-end">
+
+
+                                    {isEditingQuestion ? (
+                                        <textarea
+                                            value={questionDraft}
+                                            onChange={(event) => setQuestionDraft(event.target.value)}
+                                            className="min-h-28 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm leading-6 text-foreground outline-none transition-colors focus:border-main-navy/40 focus:ring-3 focus:ring-main-navy/10"
+                                        />
+                                    ) : (
+                                        <p className="text-base font-medium text-foreground">
+                                            {question}
+                                        </p>
+                                    )}
+                                </div>
+
                             </div>
                             <div className="rounded-lg bg-muted/50 p-4">
                                 <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -274,15 +272,59 @@ export default function PendingApprovalDetailPage() {
                     </div>
 
                     <div className="rounded-lg border border-border/70 bg-card p-5 shadow-[var(--shadow-card)]">
-                        <div className="mb-4 flex items-center gap-2 text-main-navy">
-                            <Bot className="size-4" />
-                            <h2 className="text-base font-semibold">Generated answer</h2>
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-main-navy">
+                                <Bot className="size-4" />
+                                <h2 className="text-base font-semibold">Generated answer</h2>
+                            </div>
+                            {isEditingAnswer ? (
+                                <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" onClick={cancelEditingAnswer} disabled={isApproving}>
+                                        Cancel
+                                    </Button>
+                                    <Button size="sm" onClick={saveAnswer} disabled={isApproving} className="bg-main-primary-light hover:bg-main-secondary">
+                                        Save
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button variant="outline" size="sm" onClick={startEditingAnswer} disabled={isApproving}>
+                                    <Pencil className="size-4" />
+                                    Edit
+                                </Button>
+                            )}
                         </div>
 
                         <div className="space-y-3">
-                            {answerSegments.length > 0 ? (
+                            {isEditingAnswer ? (
+                                <>
+                                    <textarea
+                                        ref={answerTextareaRef}
+                                        value={answerDraft}
+                                        onChange={(event) => setAnswerDraft(event.target.value)}
+                                        className="min-h-56 w-full resize-y rounded-lg border border-border bg-background px-3 py-2 text-sm leading-7 text-foreground outline-none transition-colors focus:border-main-navy/40 focus:ring-3 focus:ring-main-navy/10"
+                                    />
+
+                                    {preparedAnswer && (
+                                        <AvailableCitations
+                                            citations={preparedAnswer.citations}
+                                            onAddCitation={insertCitation}
+                                        />
+                                    )}
+                                </>
+                            ) : hasSavedEditedAnswer && preparedAnswer ? (
+                                <div className="rounded-lg border border-border/70 bg-background p-4 text-sm text-foreground">
+                                    <VerifiedMessageContent
+                                        editedAnswer={answer}
+                                        citations={preparedAnswer.citations}
+                                    />
+                                </div>
+                            ) : generatedAnswerSegments.length > 0 ? (
+                                <div className="rounded-lg border border-border/70 bg-background p-4 text-sm text-foreground">
+                                    <CitedAnswerContent segments={generatedAnswerSegments as CitedAnswerSegment[]} />
+                                </div>
+                            ) : answer ? (
                                 <div className="whitespace-pre-line rounded-lg border border-border/70 bg-background p-4 text-sm leading-7 text-foreground">
-                                    {generatedAnswerText}
+                                    {answer}
                                 </div>
                             ) : (
                                 <p className="rounded-lg bg-muted/50 p-4 text-sm text-muted-foreground">
@@ -330,8 +372,8 @@ export default function PendingApprovalDetailPage() {
                             <h2 className="text-base font-semibold">Asked by</h2>
                         </div>
                         <div>
-                            <p className="font-medium text-foreground">{qa.user.name}</p>
-                            <p className="mt-1 text-sm text-muted-foreground">{qa.user.email}</p>
+                            <p className="font-medium text-foreground">{qa.user?.name ?? "Unknown user"}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">{qa.user?.email ?? "Not provided"}</p>
                         </div>
                         <dl className="mt-4 space-y-3 text-sm">
                             <div>
@@ -339,7 +381,7 @@ export default function PendingApprovalDetailPage() {
                                     Account status
                                 </dt>
                                 <dd className="mt-1 capitalize text-foreground">
-                                    {qa.user.accountStatus}
+                                    {qa.user?.accountStatus ?? "Not provided"}
                                 </dd>
                             </div>
                             <div>
@@ -347,14 +389,14 @@ export default function PendingApprovalDetailPage() {
                                     Major
                                 </dt>
                                 <dd className="mt-1 text-foreground">
-                                    {qa.user.majorName ?? "Not provided"}
+                                    {qa.user?.majorName ?? "Not provided"}
                                 </dd>
                             </div>
                             <div>
                                 <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                     Cohort
                                 </dt>
-                                <dd className="mt-1 text-foreground">{qa.user.cohort ?? "Not provided"}</dd>
+                                <dd className="mt-1 text-foreground">{qa.user?.cohort ?? "Not provided"}</dd>
                             </div>
                         </dl>
                     </div>

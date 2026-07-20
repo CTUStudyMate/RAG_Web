@@ -7,10 +7,10 @@ export interface RelatedQaResponse {
 export interface RelatedQa {
   verifiableQaId: number;
   messageId: string;
-  userId: number;
+  userId: number | null;
 
   originalQuestion: string;
-  rewrittenQuestion: string;
+  rewrittenQuestion: string | null;
 
   /**
    * Backend đang trả generatedAnswer dưới dạng JSON string.
@@ -21,7 +21,7 @@ export interface RelatedQa {
   status: number;
   createdAt: string;
 
-  user: QaUser;
+  user: QaUser | null;
   courses: QaCourse[];
 }
 

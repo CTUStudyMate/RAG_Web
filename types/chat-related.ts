@@ -2,8 +2,17 @@ export interface ChatMessage {
     messageId: string;
     content: string;
     messageSegments?: RagSegment[];
+    isVerify: boolean;
     createdAt: string;
     senderType: "user" | "assistant";
+    chatId: string;
+}
+
+export interface SendUserMessageRequest {
+    messageId: string;
+    content: string;
+    senderType: "user" | "assistant";
+    createdAt: string;
     chatId: string;
 }
 

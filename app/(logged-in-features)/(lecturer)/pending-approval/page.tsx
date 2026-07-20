@@ -1,7 +1,15 @@
+"use client";
+
 import { BookOpenCheck, CalendarClock, Check, CheckCircle2, CircleHelp, Clock3, Eye } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
+import useSWR from "swr";
 
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
+import { fetcher } from "@/lib/utils";
+import { prepareEditableAnswer } from "@/lib/verified-answer";
+import { approveVerifiableQa } from "@/services/verifiable-qa";
 import type {
     RelatedQa,
     RelatedQaResponse,
@@ -59,15 +67,17 @@ function parseGeneratedAnswer(answer: string): GeneratedAnswerSegment[] {
     }
 }
 
-function getAnswerPreview(qa: RelatedQa) {
+function getApprovedAnswer(qa: RelatedQa) {
     const segments = parseGeneratedAnswer(qa.generatedAnswer);
 
-    return (
-        segments
-            .map((segment) => segment.segment)
-            .filter(Boolean)
-            .join(" ") || "No generated answer."
-    );
+    return segments
+        .map((segment) => segment.segment)
+        .filter(Boolean)
+        .join(" ") || qa.generatedAnswer.trim();
+}
+
+function getAnswerPreview(qa: RelatedQa) {
+    return getApprovedAnswer(qa) || "No generated answer.";
 }
 
 function formatCreatedAt(value: string) {
@@ -91,10 +101,19 @@ function isCreatedToday(value: string) {
 }
 
 export default function PendingApprovalPage() {
+    const { data, error, isLoading, mutate } = useSWR<RelatedQaResponse>(
+        "/api/verifiable-qa",
+        fetcher,
+        { revalidateOnFocus: false }
+    );
+    const [approvingQaId, setApprovingQaId] = useState<number | null>(null);
+    const pendingQas = data
+        ? [...data.relatedQa, ...data.undefinedCourseQa]
+        : [];
     const pendingCount = pendingQas.length;
     const pendingToday = pendingQas.filter((qa) => isCreatedToday(qa.createdAt)).length;
-    const undefinedCourseCount = exampleResponse.undefinedCourseQa.length;
-    const approvedTotal = 0;
+    const undefinedCourseCount = data?.undefinedCourseQa.length ?? 0;
+    const relatedCourseCount = data?.relatedQa.length ?? 0;
     const approvedToday = 0;
 
     const summaryItems = [
@@ -111,7 +130,7 @@ export default function PendingApprovalPage() {
         },
         {
             label: "Related to your courses",
-            value: approvedTotal,
+            value: relatedCourseCount,
             detail: "All time",
             icon: BookOpenCheck,
         },
@@ -128,6 +147,30 @@ export default function PendingApprovalPage() {
             icon: CheckCircle2,
         },
     ];
+
+    async function handleApprove(qa: RelatedQa) {
+        const approvedAnswer = prepareEditableAnswer(qa.generatedAnswer);
+
+        if (!approvedAnswer.editedAnswer.trim()) {
+            toast({ type: "error", description: "Generated answer cannot be empty." });
+            return;
+        }
+
+        setApprovingQaId(qa.verifiableQaId);
+
+        try {
+            await approveVerifiableQa(qa.verifiableQaId, {
+                ...approvedAnswer,
+                editedAnswer: approvedAnswer.editedAnswer.trim(),
+            });
+            await mutate();
+            toast({ type: "success", description: "Verifiable QA approved successfully." });
+        } catch {
+            toast({ type: "error", description: "Failed to approve verifiable QA." });
+        } finally {
+            setApprovingQaId(null);
+        }
+    }
 
     return (
         <main className="min-h-screen bg-background py-3 text-foreground md:pl-6 md:pr-6">
@@ -190,23 +233,41 @@ export default function PendingApprovalPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/70">
-                            {pendingQas.map((qa, index) => (
+                            {isLoading ? (
+                                <tr>
+                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                        Loading pending QA list...
+                                    </td>
+                                </tr>
+                            ) : error ? (
+                                <tr>
+                                    <td colSpan={5} className="px-4 py-8 text-center text-destructive">
+                                        Failed to load pending QA list.
+                                    </td>
+                                </tr>
+                            ) : pendingQas.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                                        No pending QA found.
+                                    </td>
+                                </tr>
+                            ) : pendingQas.map((qa) => (
                                 <tr
-                                    key={`${qa.verifiableQaId}-${index}`}
+                                    key={qa.verifiableQaId}
                                     className="align-top transition-colors hover:bg-muted/35"
                                 >
                                     <td className="px-4 py-4 text-muted-foreground">
                                         <div className="font-medium text-foreground">
                                             {formatCreatedAt(qa.createdAt)}
                                         </div>
-                                        <div className="mt-1 text-xs">{qa.user.name}</div>
+                                        <div className="mt-1 text-xs">{qa.user?.name ?? "Unknown user"}</div>
                                     </td>
                                     <td className="px-4 py-4">
                                         <p className="line-clamp-3 font-medium text-foreground">
                                             {qa.originalQuestion}
                                         </p>
                                         <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">
-                                            Rewritten: {qa.rewrittenQuestion}
+                                            Rewritten: {qa.rewrittenQuestion ?? "Not provided"}
                                         </p>
                                     </td>
                                     <td className="px-4 py-4">
@@ -229,9 +290,15 @@ export default function PendingApprovalPage() {
                                     </td>
                                     <td className="px-4 py-4">
                                         <div className="flex justify-end gap-2">
-                                            <Button size="sm">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleApprove(qa)}
+                                                disabled={approvingQaId !== null}
+                                            >
                                                 <Check className="size-3.5" />
-                                                Approve
+                                                {approvingQaId === qa.verifiableQaId
+                                                    ? "Approving..."
+                                                    : "Approve"}
                                             </Button>
                                             <Button variant="outline" size="sm" asChild>
                                                 <Link href={`/pending-approval/${qa.verifiableQaId}`}>

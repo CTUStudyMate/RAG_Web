@@ -8,6 +8,7 @@ import { Messages } from "./messages";
 import MessageInput from "../component-items/message-input";
 
 export function ChatShell() {
+    console.log("render chat shell")
     const {
         chatId,
         chatData,

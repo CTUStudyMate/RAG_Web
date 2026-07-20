@@ -14,6 +14,12 @@ export interface CitationImage {
     objectUrl: string;
 }
 
+export interface CitationDocument {
+    documentId: number;
+    documentTitle: string;
+    fileUrl: string;
+}
+
 export async function fetchCitationData(citationObj: {
     textChunkIds: string[];
     imgIds: string[];
@@ -181,6 +187,24 @@ export async function fetchImage(imageKey: string): Promise<CitationImage> {
     };
 }
 
+export async function fetchDocument(documentKey: string): Promise<CitationDocument> {
+    // document_xxx -> xxx
+    const documentId = documentKey.replace("document_", "");
+
+    const res = await fetch(
+        `${backendUrl}/api/app-data/documents/${documentId}`,
+        {
+            credentials: "include",
+        }
+    );
+
+    if (!res.ok) {
+        throw new Error("Failed to fetch document.");
+    }
+
+    return res.json();
+}
+
 // use:
 // const { data: chunk } = useSWR(
 //     `chunk_${chunkId}`,
@@ -190,5 +214,10 @@ export async function fetchImage(imageKey: string): Promise<CitationImage> {
 // const { data: image } = useSWR(
 //     `image_${imgId}`,
 //     fetchImage
+// );
+
+// const { data: document } = useSWR(
+//     `document_${documentId}`,
+//     fetchDocument
 // );
 

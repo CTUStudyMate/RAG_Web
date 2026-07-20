@@ -38,5 +38,6 @@ export function mapChatMessage(dto: any): ChatMessage {
         senderType: dto.senderType,
         chatId: dto.chatId,
         messageSegments: dto.messageSegments?.map(mapRagSegment),
+        isVerify: Boolean(dto.isVerify),
     };
 }

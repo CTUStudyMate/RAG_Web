@@ -176,10 +176,14 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-main-navy: var(--main-navy);
+  --color-main-primary-light: var(--main-primary-light);
+  --color-main-secondary: var(--main-secondary);
 }
 
 :root {
   --main-navy: #1E2A44;
+  --main-primary-light: #00afef;
+  --main-secondary: #1f5ca9;
   --radius: 0.625rem;
   --background: oklch(0.985 0 0);
   --foreground: oklch(0.12 0 0);

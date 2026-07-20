@@ -15,6 +15,7 @@ type MessagesProps = {
 };
 
 function PureMessages({ chatId, status, messages, setMessages, isLoading }: MessagesProps) {
+    console.log("render messages")
     const {
         containerRef: messagesContainerRef,
         endRef: messagesEndRef,

@@ -4,6 +4,7 @@ import { useMessages } from "@/hooks/use-messages";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Message, ThinkingMessage } from "../component-items/message";
+import { Greeting } from "../component-items/greeting";
 import { ArrowDownIcon } from "lucide-react";
 
 type MessagesProps = {
@@ -40,8 +41,7 @@ function PureMessages({ chatId, status, messages, setMessages, isLoading }: Mess
         <div className="flex flex-col h-full overflow-hidden text-sm">
             {messages.length === 0 && !isLoading && (
                 <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
-                    {/* <Greeting /> */}
-                    hihihi
+                    <Greeting />
                 </div>
             )}
             <div

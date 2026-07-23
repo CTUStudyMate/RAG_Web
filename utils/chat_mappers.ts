@@ -1,4 +1,11 @@
-import { ChatMessage, ProcessedCiteObj, RagCitation, RagSegment } from "@/types/chat-related";
+import {
+    ChatMessage,
+    ProcessedCiteObj,
+    RagCitation,
+    RagSegment,
+    VerifiedAnswerDto,
+} from "@/types/chat-related";
+import type { CitationRegistry, VerifiedAnswer } from "@/lib/verified-answer";
 
 function mapRagCitation(c: any): RagCitation {
     return {
@@ -30,14 +37,46 @@ function mapRagSegment(s: any): RagSegment {
     };
 }
 
+function mapVerifiedAnswer(dto: VerifiedAnswerDto): VerifiedAnswer {
+    const citations: CitationRegistry = {};
+
+    for (const [refId, citation] of Object.entries(dto.citations ?? {})) {
+        if (citation.type === "image") {
+            citations[refId] = {
+                markNumber: citation.mark_number,
+                type: "image",
+                docId: citation.doc_id,
+                imageId: citation.image_id,
+            };
+            continue;
+        }
+
+        citations[refId] = {
+            markNumber: citation.mark_number,
+            type: "text",
+            docId: citation.doc_id,
+            evidences: citation.evidences,
+        };
+    }
+
+    return {
+        editedAnswer: dto.edited_answer,
+        citations,
+        citationMap: dto.citation_map ?? {},
+    };
+}
+
 export function mapChatMessage(dto: any): ChatMessage {
     return {
         messageId: dto.messageId,
-        content: dto.content,
-        createdAt: dto.createdAt,
+        content: dto.content ?? "",
+        createdAt: dto.createdAt ?? "",
         senderType: dto.senderType,
         chatId: dto.chatId,
         messageSegments: dto.messageSegments?.map(mapRagSegment),
         isVerify: Boolean(dto.isVerify),
+        verifiedAnswer: dto.verifiedAnswer
+            ? mapVerifiedAnswer(dto.verifiedAnswer)
+            : null,
     };
 }

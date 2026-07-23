@@ -161,9 +161,12 @@ export default function PendingApprovalDetailPage() {
 
         try {
             await approveVerifiableQa(qa.verifiableQaId, {
-                editedAnswer: answer.trim(),
-                citations: preparedAnswer.citations,
-                citationMap: preparedAnswer.citationMap,
+                approvedAnswer: {
+                    editedAnswer: answer.trim(),
+                    citations: preparedAnswer.citations,
+                    citationMap: preparedAnswer.citationMap,
+                },
+                rewrittenQuestion: question.trim(),
             });
             toast({ type: "success", description: "Verifiable QA approved successfully." });
             router.push("/pending-approval");
@@ -202,7 +205,7 @@ export default function PendingApprovalDetailPage() {
                 </div>
 
                 <div className="flex gap-2">
-                    <Button onClick={handleApprove} disabled={isEditingAnswer || isApproving} className="bg-main-primary-light hover:bg-main-secondary cursor-pointer pr-5">
+                    <Button onClick={handleApprove} disabled={isEditingQuestion || isEditingAnswer || isApproving} className="bg-main-primary-light hover:bg-main-secondary cursor-pointer pr-5">
                         <Check className="size-4" />
                         {isApproving ? "Approving..." : "Approve"}
                     </Button>

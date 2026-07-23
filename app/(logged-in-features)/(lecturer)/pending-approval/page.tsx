@@ -160,8 +160,10 @@ export default function PendingApprovalPage() {
 
         try {
             await approveVerifiableQa(qa.verifiableQaId, {
-                ...approvedAnswer,
-                editedAnswer: approvedAnswer.editedAnswer.trim(),
+                approvedAnswer: {
+                    ...approvedAnswer,
+                    editedAnswer: approvedAnswer.editedAnswer.trim(),
+                },
             });
             await mutate();
             toast({ type: "success", description: "Verifiable QA approved successfully." });
@@ -294,6 +296,7 @@ export default function PendingApprovalPage() {
                                                 size="sm"
                                                 onClick={() => handleApprove(qa)}
                                                 disabled={approvingQaId !== null}
+                                                className="bg-main-primary-light hover:bg-main-secondary cursor-pointer"
                                             >
                                                 <Check className="size-3.5" />
                                                 {approvingQaId === qa.verifiableQaId

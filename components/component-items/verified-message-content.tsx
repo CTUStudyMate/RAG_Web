@@ -67,7 +67,8 @@ export function VerifiedMessageContent({
     citations,
 }: VerifiedMessageContentProps) {
     const lines = editedAnswer.split("\n");
-
+    console.log("Citation is:")
+    console.log(citations)
     return (
         <div className="whitespace-pre-wrap leading-7">
             {lines.map((line, index) => (

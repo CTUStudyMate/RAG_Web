@@ -3,6 +3,9 @@ import { ChatMessage, RagSegment } from "@/types/chat-related";
 import { CitationBadge } from "./citation";
 import { processCitationMark } from "@/lib/message_helpers";
 import { SparklesIcon } from "lucide-react";
+import { VerifiedMessageContent } from "./verified-message-content";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function renderSegment(
     segment: RagSegment,
@@ -78,6 +81,22 @@ function MessageContent({ message }: { message: ChatMessage }) {
         );
     }
 
+    const [onlySegment] = message.messageSegments;
+    const shouldRenderMarkdownFallback =
+        message.messageSegments.length === 1 &&
+        !onlySegment.processedCiteObj &&
+        onlySegment.segment.includes("\n");
+
+    if (shouldRenderMarkdownFallback) {
+        return (
+            <div className="prose prose-sm max-w-none text-foreground prose-p:my-3 prose-p:leading-[1.7] prose-p:text-foreground prose-ol:my-3 prose-ul:my-3 prose-li:my-1 prose-li:text-foreground prose-strong:text-foreground prose-em:text-foreground">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {onlySegment.segment}
+                </ReactMarkdown>
+            </div>
+        );
+    }
+
     const citations = processCitationMark(message);
     console.log("message id:", message.messageId);
     console.log("citation map:", citations);
@@ -129,8 +148,38 @@ export function Message({ message, isLoading, requiresScrollPadding, setMessages
     }
 ) {
     console.log("senderType:", message.senderType);
-    if (message.senderType == "assistant")
-        return <AssistantMessage message={message} ></AssistantMessage>
+    if (message.senderType == "assistant") {
+        if (message.isVerify == true) {
+            // render verified message
+            if (!message.verifiedAnswer) {
+                console.log("is verify but message weird")
+                console.log(message)
+                return (
+                    <div className="flex w-full justify-start">
+                        <div
+                            role="alert"
+                            className="max-w-[75%] rounded-md border border-destructive/20 bg-destructive/10 px-4 py-2 text-sm text-destructive"
+                        >
+                            {message.content || "Something went wrong while loading this message."}
+                        </div>
+                    </div>
+                )
+            }
+            return (
+                <div>
+                    <span className="mb-2 inline-flex rounded-md border border-emerald-600/20 bg-emerald-600/10 px-2 py-1 text-xs font-medium text-emerald-700">
+                        Verified by Lecturer
+                    </span>
+                    <VerifiedMessageContent
+                        editedAnswer={message.verifiedAnswer.editedAnswer}
+                        citations={message.verifiedAnswer.citations}
+                    />
+                </div>
+            )
+        } else {
+            return <AssistantMessage message={message} ></AssistantMessage>
+        }
+    }
     else if (message.senderType == "user")
         return <UserMessage message={message}></UserMessage>
     else {
@@ -149,15 +198,18 @@ export const ThinkingMessage = () => {
         >
             <div className="flex items-start gap-3">
                 <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-                    <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-                        <SparklesIcon size={13} />
+                    <div className="flex size-7 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50 motion-safe:animate-pulse">
+                        <SparklesIcon className="size-3.5" />
                     </div>
                 </div>
 
-                <div className="flex h-[calc(13px*1.65)] items-center text-[13px] leading-[1.65]">
-                    {/* <Shimmer className="font-medium" duration={1}> */} <div>
-                        Thinking...
-                        {/* </Shimmer> */} </div>
+                <div className="flex h-[calc(13px*1.65)] items-center gap-1.5 text-[13px] leading-[1.65] text-muted-foreground">
+                    <span>Thinking</span>
+                    <span className="flex items-center gap-1" aria-label="Loading">
+                        <span className="size-1 rounded-full bg-current motion-safe:[animation:thinking-bounce_0.8s_ease-in-out_-0.3s_infinite]" />
+                        <span className="size-1 rounded-full bg-current motion-safe:[animation:thinking-bounce_0.8s_ease-in-out_-0.15s_infinite]" />
+                        <span className="size-1 rounded-full bg-current motion-safe:[animation:thinking-bounce_0.8s_ease-in-out_0s_infinite]" />
+                    </span>
                 </div>
             </div>
         </div>

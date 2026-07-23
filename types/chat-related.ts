@@ -1,11 +1,34 @@
+import type { VerifiedAnswer } from "@/lib/verified-answer";
+
+export type VerifiedCitationDto =
+    | {
+        mark_number: number;
+        type: "text";
+        doc_id: string;
+        evidences: string[];
+    }
+    | {
+        mark_number: number;
+        type: "image";
+        doc_id: string;
+        image_id: string;
+    };
+
+export interface VerifiedAnswerDto {
+    edited_answer: string;
+    citations: Record<string, VerifiedCitationDto>;
+    citation_map: Record<string, number>;
+}
+
 export interface ChatMessage {
     messageId: string;
     content: string;
-    messageSegments?: RagSegment[];
+    messageSegments?: RagSegment[] | null;
     isVerify: boolean;
     createdAt: string;
     senderType: "user" | "assistant";
     chatId: string;
+    verifiedAnswer?: VerifiedAnswer | null;
 }
 
 export interface SendUserMessageRequest {

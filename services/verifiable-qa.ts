@@ -3,9 +3,14 @@ import type { VerifiedAnswer } from "@/lib/verified-answer";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_BASE_URL;
 
+type ApproveVerifiableQaPayload = {
+    approvedAnswer: VerifiedAnswer;
+    rewrittenQuestion?: string;
+};
+
 export async function approveVerifiableQa(
     verifiableQaId: number,
-    approvedAnswer: VerifiedAnswer
+    { approvedAnswer, rewrittenQuestion }: ApproveVerifiableQaPayload
 ): Promise<RelatedQa> {
     const res = await fetch(
         `${backendUrl}/api/verifiable-qa/${verifiableQaId}/approve`,
@@ -17,6 +22,7 @@ export async function approveVerifiableQa(
             credentials: "include",
             body: JSON.stringify({
                 approvedAnswer: JSON.stringify(approvedAnswer),
+                ...(rewrittenQuestion !== undefined ? { rewrittenQuestion } : {}),
             }),
         }
     );
